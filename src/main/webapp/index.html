@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Apache Tomcat WebSocket Examples: Chat</title>
+    <style type="text/css">
+        p {
+        margin: 0;
+        }
+
+        #messageArea {
+        width: 500px;
+        height: 200px;
+        overflow: auto;
+        border: 1px solid black;
+        }
+
+        #iptMessage {
+        width: 240px;
+        }
+    </style>
+</head>
+<body>
+<h2>Chat</h2>
+<div id="messageArea"></div>
+<div>
+    <form onsubmit="return false;">
+        <input id="iptMessage" name="message" />
+        <button id="btnEnviar">Enviar</button>
+    </form>
+</div>
+
+<script type="text/javascript">
+    function log(msg) {
+        if (typeof console !== "undefined")
+            console.log(msg);
+    }
+
+    var username = prompt("Conectar como?");
+
+    if ('WebSocket' in window) {
+        var websocket = new WebSocket("ws://" + document.location.host
+                + "/tomcat-webrtc/websocket?username=" + username);
+    } else if ('MozWebSocket' in window) {
+        var websocket = new WebSocket("ws://" + document.location.host
+                + "/tomcat-webrtc/websocket?username=" + username);
+    } else {
+        alert("Browser não suporta WebSocket");
+    }
+
+    if (websocket != undefined) {
+        websocket.onopen = function() {
+            log("Conectou com sucesso");
+        };
+
+        websocket.onclose = function() {
+            log("Desconectou com sucesso");
+            alert("Desconectou com sucesso");
+        };
+
+        websocket.onerror = function() {
+            log("Aconteceu um erro");
+        };
+
+        websocket.onmessage = function(data) {
+            log("Recebeu mensagem");
+            log(data);
+            var message = "<p>" + data.data + "</p>";
+            var messageArea = document.getElementById("messageArea");
+            messageArea.innerHTML += message;
+            messageArea.scrollTop = messageArea.scrollHeight;
+        };
+
+    function sendMessage(msg) {
+        log("Enviar mensagem (" + msg + ")");
+        websocket.send(msg);
+    }
+
+    document.getElementById("btnEnviar").onclick = function() {
+            var msg = document.getElementById("iptMessage").value;
+            sendMessage(msg);
+            return false;
+            };
+        }
+</script>
+</body>
+</html>
