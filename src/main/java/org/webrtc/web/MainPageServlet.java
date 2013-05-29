@@ -32,7 +32,7 @@ public class MainPageServlet extends HttpServlet {
         String PATH = req.getContextPath().replace("/", "");
         String query = req.getQueryString();
         if (query == null) {
-            String redirect = "/" + PATH + "/?r=" + Helper.generate_random(8);
+            String redirect = "/" + PATH + "/main?r=" + Helper.generate_random(8);
             logger.info("Null Query -> Redirecting visitor to base URL to " + redirect);
             resp.sendRedirect(redirect);
             return;
@@ -41,17 +41,28 @@ public class MainPageServlet extends HttpServlet {
         String room_key = Helper.sanitize(params.get("r"));
         String debug = params.get("debug");
         String stun_server = params.get("ss");
-        String audio_video = params.get("av");
-        if (room_key == null || room_key.equals("")) {
+        String turn_server = params.get("ts");
+        String min_resolution = params.get("minre");
+        String max_resolution = params.get("maxre");
+        String hd_video = params.get("hd");
+        Boolean compat = params.containsKey("compat") ? Boolean.valueOf(params.get("compat")): false;
+        if (room_key == null || room_key.isEmpty()) {
             room_key = Helper.generate_random(8);
-            String redirect = "/" + PATH + "/?r=" + room_key;
+            String redirect = "/" + PATH + "/main?r=" + room_key;
             if (debug != null)
                 redirect += ("&debug=" + debug);
-            if (stun_server != null || !stun_server.equals(""))
+            if (stun_server != null || !stun_server.isEmpty())
                 redirect += ("&ss=" + stun_server);
+            if (turn_server != null || !turn_server.isEmpty())
+                redirect += ("&ts=" + turn_server);
+            if (min_resolution != null || !min_resolution.isEmpty())
+                redirect += ("&minre=" + turn_server);
+            if (max_resolution != null || !max_resolution.isEmpty())
+                redirect += ("&maxre=" + turn_server);
+            if (hd_video != null || !hd_video.isEmpty())
+                redirect += ("&hd=" + hd_video);
             logger.info("Absent room key -> Redirecting visitor to base URL to " + redirect);
             resp.sendRedirect(redirect);
-            return;
         } else {
             String user = null;
             int initiator = 0;
@@ -84,14 +95,25 @@ public class MainPageServlet extends HttpServlet {
 
             String server_name = req.getServerName();
             int server_port = req.getServerPort();
-            String room_link = "http://" + server_name + ":" + server_port + "/" + PATH + "/?r=" + room_key;
+            String room_link = "http://" + server_name + ":" + server_port + "/" + PATH + "/main?r=" + room_key;
             if (debug != null)
                 room_link += ("&debug=" + debug);
-            if (stun_server != null)
+            if (stun_server != null && !stun_server.isEmpty())
                 room_link += ("&ss=" + stun_server);
+            if (turn_server != null && !turn_server.isEmpty())
+                room_link += ("&ts=" + turn_server);
+            if (min_resolution != null && !min_resolution.isEmpty())
+                room_link += ("&minre=" + turn_server);
+            if (max_resolution != null && !max_resolution.isEmpty())
+                room_link += ("&maxre=" + turn_server);
+            if (hd_video != null && !hd_video.isEmpty())
+                room_link += ("&hd=" + hd_video);
 
             String token = Helper.make_token(room_key, user);
             String pc_config = Helper.make_pc_config(stun_server);
+            String pc_constraints = Helper.make_pc_constraints(compat);
+            String offer_constraints = Helper.make_pc_constraints(compat);
+            String media_constraints = Helper.make_media_constraints(min_resolution, max_resolution);
             Map<String, String> template_values = new HashMap<String, String>();
             template_values.put("server_name", server_name);
             template_values.put("server_port", server_port + "");
@@ -102,7 +124,10 @@ public class MainPageServlet extends HttpServlet {
             template_values.put("room_link", room_link);
             template_values.put("initiator", "" + initiator);
             template_values.put("pc_config", pc_config);
-            File file = new File(getServletContext().getRealPath("/index.html"));
+            template_values.put("pc_constraints", pc_constraints);
+            template_values.put("media_constraints", media_constraints);
+            template_values.put("offer_constraints", offer_constraints);
+            File file = new File(getServletContext().getRealPath("/main.html"));
             resp.getWriter().print(Helper.generatePage(file, template_values));
             logger.info("User " + user + " added to room " + room_key);
             logger.info("Room " + room_key + " has state " + room);

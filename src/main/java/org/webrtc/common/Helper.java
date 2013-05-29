@@ -15,7 +15,7 @@ import java.util.Map;
 public class Helper {
 
     public static final String SERVER = "http://localhost:8080";
-    private static final Configuration cfg = new Configuration();
+    private static final Configuration CFG = new Configuration();
 
     /**
      * Used to generate a random room number
@@ -88,12 +88,46 @@ public class Helper {
     }
 
     public static String make_pc_config(String stun_server) {
-        if (stun_server != null && !stun_server.equals(""))
-            return "STUN " + stun_server;
-        else
-            return "STUN stun.l.google.com:19302";
+        StringBuffer config = new StringBuffer("STUN ");
+        if (stun_server != null && !stun_server.equals("")) {
+            config.append(stun_server);
+        } else {
+            config.append("stun.l.google.com:19302");
+        }
+        return config.toString();
     }
 
+    public static String make_pc_constraints(boolean compat) {
+        StringBuffer constraints = new StringBuffer("{optional:[");
+        if (compat) {
+            constraints.append("{'DtlsSrtpKeyAgreement':true}");
+        }
+        constraints.append("]}");
+        return constraints.toString();
+    }
+
+    public static String make_offer_constraints(boolean compat) {
+        StringBuffer constraints = new StringBuffer("{optional:[],mandatory:{");
+        if (compat) {
+            constraints.append("'MozDontOfferDataChannel':true");
+        }
+        constraints.append("}}");
+        return constraints.toString();
+    }
+
+    public static String make_media_constraints(String minResolution, String maxResolution) {
+        StringBuffer constraints = new StringBuffer("{optional:[],mandatory:{");
+        if (minResolution != null && !minResolution.isEmpty()) {
+            String[] res = minResolution.split("x");
+            constraints.append("minWidth:" + res[0] + ",minHeight:" + res[1]);
+        }
+        if (maxResolution != null && !maxResolution.isEmpty()) {
+            String[] res = maxResolution.split("x");
+            constraints.append("maxWidth:" + res[0] + ",maxHeight:" + res[1]);
+        }
+        constraints.append("}}");
+        return constraints.toString();
+    }
 
     /**
      * Create a {@link Map} from a {@link String} representing an URL query
@@ -131,8 +165,8 @@ public class Helper {
         //String block = "main";
         String output = null;
         try {
-            cfg.setDirectoryForTemplateLoading(file.getParentFile());
-            Template tpl = cfg.getTemplate(file.getName());
+            CFG.setDirectoryForTemplateLoading(file.getParentFile());
+            Template tpl = CFG.getTemplate(file.getName());
             StringWriter sw = new StringWriter();
             tpl.process(values, sw);
             output = sw.toString();
