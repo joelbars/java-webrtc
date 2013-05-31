@@ -14,13 +14,18 @@ import java.util.Map;
 
 public class Helper {
 
-    public static final String SERVER = "http://localhost:8080";
+    /**
+     * Template default configuration.
+     */
     private static final Configuration CFG = new Configuration();
 
     /**
-     * Used to generate a random room number
+     * Creates a random string with desired length.
+     *
+     * @param len the random string length.
+     * @return a random string.
      */
-    public static String generate_random(int len) {
+    public static String randomize(int len) {
         String generated = "";
         for (int i = 0; i < len; i++) {
             int index = ((int) Math.round(Math.random() * 10)) % 10;
@@ -29,65 +34,22 @@ public class Helper {
         return generated;
     }
 
-    public static String sanitize(String key) {
-        return key.replace("[^a-zA-Z0-9\\-]", "-");
-    }
-
     /**
-     * @return a token for a given room instance and a participant
-     */
-    public static String make_token(Room room, String user) {
-        return room.key() + "/" + user;
-    }
-
-    /**
-     * @return a token for a given room key and a participant
-     */
-    public static String make_token(String room_key, String user) {
-        return room_key + "/" + user;
-    }
-
-    /**
-     * Check if the token in parameter corresponds to an existent room that has a participant identified in the token
+     * Removes invalid characters from a specified string.
      *
-     * @return true if token is valid, false otherwise.
+     * @param str the string to be cleaned.
+     * @return the new string with no invalid characters.
      */
-    public static boolean is_valid_token(String token) {
-        boolean valid = false;
-        Room room = Room.get_by_key_name(get_room_key(token));
-        String user = get_user(token);
-        if (room != null && room.has_user(user))
-            valid = true;
-        return valid;
+    public static String sanitize(String str) {
+        return str.replace("[^a-zA-Z0-9\\-]", "-");
     }
 
     /**
-     * @return room key from the token parameter
+     *
+     * @param stun_server
+     * @return
      */
-    public static String get_room_key(String token) {
-        String room_key = null;
-        if (token != null) {
-            String[] values = token.split("/");
-            if (values != null && values.length > 0)
-                room_key = values[0];
-        }
-        return room_key;
-    }
-
-    /**
-     * @return user from the token parameter
-     */
-    public static String get_user(String token) {
-        String user = null;
-        if (token != null) {
-            String[] values = token.split("/");
-            if (values != null && values.length > 1)
-                user = values[1];
-        }
-        return user;
-    }
-
-    public static String make_pc_config(String stun_server) {
+    public static String generatePCConfig(String stun_server) {
         StringBuffer config = new StringBuffer("STUN ");
         if (stun_server != null && !stun_server.equals("")) {
             config.append(stun_server);
@@ -97,7 +59,7 @@ public class Helper {
         return config.toString();
     }
 
-    public static String make_pc_constraints(boolean compat) {
+    public static String generatePCConstraints(boolean compat) {
         StringBuffer constraints = new StringBuffer("{optional:[");
         if (compat) {
             constraints.append("{'DtlsSrtpKeyAgreement':true}");
@@ -106,7 +68,7 @@ public class Helper {
         return constraints.toString();
     }
 
-    public static String make_offer_constraints(boolean compat) {
+    public static String generateOfferConstraints(boolean compat) {
         StringBuffer constraints = new StringBuffer("{optional:[],mandatory:{");
         if (compat) {
             constraints.append("'MozDontOfferDataChannel':true");
@@ -115,7 +77,7 @@ public class Helper {
         return constraints.toString();
     }
 
-    public static String make_media_constraints(String minResolution, String maxResolution) {
+    public static String generateMediaConstraints(String minResolution, String maxResolution) {
         StringBuffer constraints = new StringBuffer("{optional:[],mandatory:{");
         if (minResolution != null && !minResolution.isEmpty()) {
             String[] res = minResolution.split("x");
@@ -132,13 +94,12 @@ public class Helper {
     /**
      * Create a {@link Map} from a {@link String} representing an URL query
      */
-    public static Map<String, String> get_query_map(String query) {
+    public static Map<String, String> generateQueryMap(String query) {
         String[] params = query.split("&");
         Map<String, String> map = new HashMap<String, String>();
         for (String param : params) {
-            String name = param.split("=")[0];
-            String value = param.split("=")[1];
-            map.put(name, value);
+            String[] entry = param.split("=");
+            map.put(entry[0], entry[1]);
         }
         return map;
     }
@@ -146,7 +107,7 @@ public class Helper {
     /**
      * Create a {@link String} from an {@link InputStream}
      */
-    public static String get_string_from_stream(InputStream input) {
+    public static String getStringFromStream(InputStream input) {
         String output = null;
         try {
             StringWriter writer = new StringWriter();

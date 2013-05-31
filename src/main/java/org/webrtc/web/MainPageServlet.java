@@ -10,8 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.webrtc.common.ChatService;
 import org.webrtc.common.Helper;
-import org.webrtc.common.SignalingWebSocket;
 import org.webrtc.model.Room;
 
 
@@ -26,18 +26,18 @@ public class MainPageServlet extends HttpServlet {
     //public static final String PATH = "jWebRTC";
 
     /**
-     * Renders the main page. When this page is shown, we create a new channel to push asynchronous updates to the client.
+     * Renders the main page. When this page is shown, we createRoom a new channel to push asynchronous updates to the client.
      */
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String PATH = req.getContextPath().replace("/", "");
         String query = req.getQueryString();
         if (query == null) {
-            String redirect = "/" + PATH + "/main?r=" + Helper.generate_random(8);
+            String redirect = "/" + PATH + "/main?r=" + Helper.randomize(8);
             logger.info("Null Query -> Redirecting visitor to base URL to " + redirect);
             resp.sendRedirect(redirect);
             return;
         }
-        Map<String, String> params = Helper.get_query_map(query);
+        Map<String, String> params = Helper.generateQueryMap(query);
         String room_key = Helper.sanitize(params.get("r"));
         String debug = params.get("debug");
         String stun_server = params.get("ss");
@@ -45,9 +45,9 @@ public class MainPageServlet extends HttpServlet {
         String min_resolution = params.get("minre");
         String max_resolution = params.get("maxre");
         String hd_video = params.get("hd");
-        Boolean compat = params.containsKey("compat") ? Boolean.valueOf(params.get("compat")): false;
+        Boolean compat = params.containsKey("compat") ? Boolean.valueOf(params.get("compat")) : false;
         if (room_key == null || room_key.isEmpty()) {
-            room_key = Helper.generate_random(8);
+            room_key = Helper.randomize(8);
             String redirect = "/" + PATH + "/main?r=" + room_key;
             if (debug != null)
                 redirect += ("&debug=" + debug);
@@ -64,24 +64,24 @@ public class MainPageServlet extends HttpServlet {
             logger.info("Absent room key -> Redirecting visitor to base URL to " + redirect);
             resp.sendRedirect(redirect);
         } else {
-            String user = null;
-            int initiator = 0;
-            Room room = Room.get_by_key_name(room_key);
+            String user;
+            int initiator;
+            Room room = ChatService.findRoom(room_key);
             if (room == null && (debug == null || !"full".equals(debug))) {
                 logger.info("New room " + room_key);
-                user = Helper.generate_random(8);
-                room = new Room(room_key);
-                room.add_user(user);
+                user = Helper.randomize(8);
+                room = ChatService.createRoom(room_key);
+                room.addUser(user);
                 if (!"loopback".equals(debug))
                     initiator = 0;
                 else {
-                    room.add_user(user);
+                    room.addUser(user);
                     initiator = 1;
                 }
-            } else if (room != null && room.get_occupancy() == 1 && !"full".equals(debug)) {
+            } else if (room != null && room.countUsers() == 1 && !"full".equals(debug)) {
                 logger.info("Room " + room_key + " with 1 occupant.");
-                user = Helper.generate_random(8);
-                room.add_user(user);
+                user = Helper.randomize(8);
+                room.addUser(user);
                 initiator = 1;
             } else {
                 logger.info("Room " + room_key + " with 2 occupants (full).");
@@ -109,11 +109,11 @@ public class MainPageServlet extends HttpServlet {
             if (hd_video != null && !hd_video.isEmpty())
                 room_link += ("&hd=" + hd_video);
 
-            String token = Helper.make_token(room_key, user);
-            String pc_config = Helper.make_pc_config(stun_server);
-            String pc_constraints = Helper.make_pc_constraints(compat);
-            String offer_constraints = Helper.make_pc_constraints(compat);
-            String media_constraints = Helper.make_media_constraints(min_resolution, max_resolution);
+            String token = room.getUserToken(user);
+            String pc_config = Helper.generatePCConfig(stun_server);
+            String pc_constraints = Helper.generatePCConstraints(compat);
+            String offer_constraints = Helper.generateOfferConstraints(compat);
+            String media_constraints = Helper.generateMediaConstraints(min_resolution, max_resolution);
             Map<String, String> template_values = new HashMap<String, String>();
             template_values.put("server_name", server_name);
             template_values.put("server_port", server_port + "");
