@@ -23,8 +23,6 @@ public class MainPageServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(MainPageServlet.class.getName());
 
-    //public static final String PATH = "jWebRTC";
-
     /**
      * Renders the main page. When this page is shown, we createRoom a new channel to push asynchronous updates to the client.
      */
@@ -32,7 +30,7 @@ public class MainPageServlet extends HttpServlet {
         String PATH = req.getContextPath().replace("/", "");
         String query = req.getQueryString();
         if (query == null) {
-            String redirect = "/" + PATH + "/main?r=" + Helper.randomize(8);
+            String redirect = String.format("/%s/main?r=%s", PATH, Helper.randomize(8));
             logger.info("Null Query -> Redirecting visitor to base URL to " + redirect);
             resp.sendRedirect(redirect);
             return;
@@ -45,7 +43,7 @@ public class MainPageServlet extends HttpServlet {
         String min_resolution = params.get("minre");
         String max_resolution = params.get("maxre");
         String hd_video = params.get("hd");
-        Boolean compat = params.containsKey("compat") ? Boolean.valueOf(params.get("compat")) : false;
+        Boolean compat = params.containsKey("compat") && Boolean.valueOf(params.get("compat"));
         if (room_key == null || room_key.isEmpty()) {
             room_key = Helper.randomize(8);
             String redirect = "/" + PATH + "/main?r=" + room_key;
@@ -95,7 +93,7 @@ public class MainPageServlet extends HttpServlet {
 
             String server_name = req.getServerName();
             int server_port = req.getServerPort();
-            String room_link = "http://" + server_name + ":" + server_port + "/" + PATH + "/main?r=" + room_key;
+            String room_link = String.format("http://%s:%d/%s/main?r=%s", server_name, server_port, PATH, room_key);
             if (debug != null)
                 room_link += ("&debug=" + debug);
             if (stun_server != null && !stun_server.isEmpty())

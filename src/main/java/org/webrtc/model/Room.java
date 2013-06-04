@@ -51,7 +51,12 @@ public class Room implements Serializable {
         if (user != null && user.contains("/")) {
             user = filterToken(user)[1];
         }
-        return users.get(users.indexOf(user) ^ 1);
+        int i = users.indexOf(user) ^ 1;
+        String participant = null;
+        if (i <= users.size()) {
+            participant = users.get(i);
+        }
+        return participant;
     }
 
     /**
