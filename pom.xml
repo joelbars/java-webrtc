@@ -8,7 +8,7 @@
     <name>Java WebRTC Example</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <jetty.version>8.1.10.v20130312</jetty.version>
+        <jetty.version>8.1.13.v20130916</jetty.version>
     </properties>
     <dependencies>
         <dependency>
