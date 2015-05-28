@@ -1,2 +1,5 @@
-/target/
-/.idea/
+/target/*
+/.idea/*
+/.classpath
+/.project
+/.settings/*
